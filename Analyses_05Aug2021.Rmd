@@ -8,3 +8,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+AMH - Load packages, set working directory, add data
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(RColorBrewer)
+library(rcompanion)
+
+setwd("C:/Users/hrusk/Dropbox (Smithsonian)/2021_SummerInterns/AM")
+
+
+```
