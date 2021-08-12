@@ -1,0 +1,58 @@
+---
+title: "Analysis 2.0"
+author: "AMH"
+date: "8/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Amy's packages and working directory
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(RColorBrewer)
+library(rcompanion)
+
+setwd("C:/Users/hrusk/Dropbox (Smithsonian)/2021_SummerInterns/AM")
+
+data <- read.csv("Heat_herbivory _alldata.csv")
+
+```
+
+Annika's packages and working directory
+```{r}
+
+```
+
+Data wrangling/cleaning
+```{r}
+
+```
+
+BarStats Function
+```{r}
+
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count] <- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+  
+}
+```
+
+
