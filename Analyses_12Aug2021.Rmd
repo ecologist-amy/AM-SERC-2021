@@ -23,6 +23,13 @@ dat <- read.csv("Heat_herbivory_alldata.csv")
 
 ```
 
+
+Annika just messin' around 
+```{r}
+shawty <- 3*7*16
+print(shawty)
+```
+
 Annika's packages and working directory
 ```{r}
 

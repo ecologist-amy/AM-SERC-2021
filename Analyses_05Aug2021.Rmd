@@ -21,3 +21,11 @@ setwd("C:/Users/hrusk/Dropbox (Smithsonian)/2021_SummerInterns/AM")
 
 
 ```
+
+AKM - Messin' around :P
+```{r}
+hey.variable <- 3*9
+print(hey.variable)
+
+```
+
