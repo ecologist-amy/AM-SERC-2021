@@ -56,3 +56,20 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ```
 
 
+```{r}
+##Creating colourblind palette###
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+##saved graph as variable to edit theme below##
+g1 <- ggplot(data = barGraphStats(data = data, variable = "Plant.Height..cm.", byFactorNames = c("Host.Plant", "Temperature")), aes(x=Host.Plant, y=mean, fill = Temperature)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Plant Height") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g1 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 24),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)), legend.position = "none")
+
+
+```
+
