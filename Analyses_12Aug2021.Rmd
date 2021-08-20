@@ -19,9 +19,8 @@ library(rcompanion)
 
 setwd("C:/Users/hrusk/Dropbox (Smithsonian)/2021_SummerInterns/AM")
 
-dat <- read.csv("Heat_herbivory_alldata.csv")
+dat <- read.csv("Heat_herbivory_alldata_v2.csv")
 
-dat2 <- read.csv("Heat_herbivory_alldata_v2.csv")
 
 ```
 
