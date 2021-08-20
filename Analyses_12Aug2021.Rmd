@@ -21,6 +21,8 @@ setwd("C:/Users/hrusk/Dropbox (Smithsonian)/2021_SummerInterns/AM")
 
 dat <- read.csv("Heat_herbivory_alldata.csv")
 
+dat2 <- read.csv("Heat_herbivory_alldata_v2.csv")
+
 ```
 
 
@@ -168,6 +170,9 @@ anova(mod1)
 
 mod2 <- lm(Height_cm ~ Temperature*Species, data = height3)
 anova(mod2)
+
+mod3 <- lm(delta ~ Temperature.x*Species.x, data = height7)
+anova(mod3)
 
 ```
 
