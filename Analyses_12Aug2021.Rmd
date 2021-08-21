@@ -32,6 +32,9 @@ print(shawty)
 
 Annika's packages and working directory
 ```{r}
+setwd("/Users/annikamunson/Box Sync/Git SERC/AM-SERC-2021")
+
+dat <- read.csv("Heat on Herbivory - All data (1).csv")
 
 ```
 
