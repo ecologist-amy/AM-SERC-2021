@@ -33,9 +33,14 @@ print(shawty)
 
 Annika's packages and working directory
 ```{r}
-setwd("/Users/annikamunson/Box Sync/Git SERC/AM-SERC-2021")
+library(tidyverse)
+library(ggpubr)
+library(RColorBrewer)
+library(rcompanion)
 
-dat <- read.csv("Heat on Herbivory - All data (1).csv")
+setwd("~/Dropbox/2021_SummerInterns/AM")
+
+dat <- read.csv("Heat_herbivory_alldata_v2.csv")
 
 ```
 
