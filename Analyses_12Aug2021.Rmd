@@ -19,7 +19,8 @@ library(rcompanion)
 
 setwd("C:/Users/hrusk/Dropbox (Smithsonian)/2021_SummerInterns/AM")
 
-dat <- read.csv("Heat_herbivory_alldata.csv")
+dat <- read.csv("Heat_herbivory_alldata_v2.csv")
+
 
 ```
 
@@ -40,33 +41,66 @@ dat <- read.csv("Heat on Herbivory - All data (1).csv")
 
 Data wrangling/cleaning
 ```{r}
-#test height_cm is numeric and set to numeric#
-is.numeric(height$Height_cm)
-height$Height_cm <- as.numeric(height$Height_cm)
+##remove spaces from dataset#
+dat2 <- dat %>%
+  mutate(across(where(is.factor), str_remove_all, pattern = fixed (" ")))
+
+#####################################################
+#################### height data ####################
+#####################################################
 
 #create dataset for height graphing and analysis#
-height <- dat %>%
+height <- dat2 %>%
   select(Date, Species, Temperature, Plant_number, Height_cm)
+height$Height_cm <- as.numeric(height$Height_cm)
+height2 <- na.omit(height)
+
+#test height_cm is numeric and set to numeric#
+is.numeric(height2$Height_cm)
+height2$Height_cm <- as.numeric((height2$Height_cm))
 
 #height last day#
-height2 <- height %>%
+height3 <- height2 %>%
   filter(Date == "9-Aug")
+height3 <- na.omit(height3)
+height3$Height_cm <- as.numeric(height3$Height_cm)
 
 #height first day#
-height3 <- height %>%
+height4 <- height %>%
   filter(Date == "8-Jul")
+height4$Height_cm <- as.numeric((height4$Height_cm))
 
 #merge height of last and first date and create a new column for change in height#
-height4 <- merge(height2, height3, by = "Plant_number")
+height5 <- merge(height3, height4, by = "Plant_number")
+height6 <- na.omit(height5)
+height6$Height_cm.x <- as.numeric((height6$Height_cm.x))
+height6$Height_cm.y <- as.numeric((height6$Height_cm.y))
 
-height4$delta_height <- height4 %>%
-  mutate(height4$Height_cm.x - height4$Height_cm.y)
+height7 <- height6 %>% 
+  mutate(delta= height6$Height_cm.x - height6$Height_cm.y)
+
+######################################################
+#################### biomass data ####################
+######################################################
+
+biomass <- dat2 %>%
+  select(Date, Species, Temperature, Plant_number, abg_biomass_g, blg_biomass_g)
 
 
+biomass2 <- biomass
+biomass2[biomass2 == "" | biomass2 == "N/A"] <- NA
+biomass2$blg_biomass_g <- as.numeric(biomass2$blg_biomass_g)
 
+abg_biomass <- biomass2 %>%
+  filter(abg_biomass_g > 0)
 
+blg_biomass <- biomass2 %>%
+  filter(blg_biomass_g > 0)
 
-
+total <- blg_biomass %>%
+  mutate(total_biomass_g = blg_biomass$abg_biomass_g + blg_biomass$blg_biomass_g)
+  
+  
 ```
 
 BarStats Function
@@ -91,25 +125,12 @@ barGraphStats <- function(data, variable, byFactorNames) {
 }
 ```
 
-
+Plant Height Graphs and Analyses
+Plant height over all weeks
 ```{r}
 ##Creating colourblind palette###
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-##saved graph as variable to edit theme below##
-g1 <- ggplot(data = barGraphStats(data = height, variable = "Height_cm", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
-    geom_bar(stat='identity', position=position_dodge()) +
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
-    xlab("Plant Species") + ylab("Plant Height (cm)") +
-    scale_fill_manual(values = cbPalette) 
-
-##setting theme to remove background grid and add axis lines##    
-g1 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
-
-
-```
-Height on final day graph
-```{r}
 ##saved graph as variable to edit theme below##
 g1 <- ggplot(data = barGraphStats(data = height2, variable = "Height_cm", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
     geom_bar(stat='identity', position=position_dodge()) +
@@ -118,5 +139,105 @@ g1 <- ggplot(data = barGraphStats(data = height2, variable = "Height_cm", byFact
     scale_fill_manual(values = cbPalette) 
 
 ##setting theme to remove background grid and add axis lines##    
-g1 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+g1 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+           axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("plant_height_allweeks.png")
+
 ```
+
+
+Height on final day graph
+```{r}
+##saved graph as variable to edit theme below##
+g2 <- ggplot(data = barGraphStats(data = height3, variable = "Height_cm", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Plant Height (cm)") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g2 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("height_finalday.png")
+```
+Delta height graph
+```{r}
+g2 <- ggplot(data = barGraphStats(data = height7, variable = "delta", byFactorNames = c("Species.x", "Temperature.x")), aes(x=Species.x, y=mean, fill = Temperature.x)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Change in Plant Height (cm)") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g2 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("height_delta.png")
+```
+Stats on plant height
+```{r}
+
+#test for normality, definitly not normal#
+shapiro.test(height2$Height_cm)
+ggqqplot(height2$Height_cm)
+
+#logtransform and checking normality of height
+ggqqplot(log(height2$Height_cm))
+
+##packages for glm, glmms#
+library(lme4)
+library(nlme)
+library(lattice)
+library(effects)
+
+mod1 <- lme(Height_cm ~ Temperature*Species, random = ~1|Date, data = height2)
+anova(mod1)
+
+mod2 <- glm(Height_cm ~ Temperature*Species, data = height3)
+anova(mod2)
+
+mod3 <- glm(delta ~ Temperature.x*Species.x, data = height7)
+anova.glm(mod3)
+
+```
+
+Biomass graphs and analyses
+Total biomass graph
+```{r}
+g3 <- ggplot(data = barGraphStats(data = total, variable = "total_biomass_g", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Total Biomass (g)") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g3 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+
+```
+
+Aboveground Biomass graph
+```{r}
+g4 <- ggplot(data = barGraphStats(data = abg_biomass, variable = "abg_biomass_g", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Aboveground Biomass (g)") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g4 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+```
+Belowground Biomass
+```{r}
+g5 <- ggplot(data = barGraphStats(data = total, variable = "blg_biomass_g", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Belowground Biomass (g)") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g5 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+```
+
