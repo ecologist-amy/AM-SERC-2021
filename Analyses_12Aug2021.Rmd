@@ -116,7 +116,23 @@ blg_biomass <- biomass2 %>%
 
 total <- blg_biomass %>%
   mutate(total_biomass_g = blg_biomass$abg_biomass_g + blg_biomass$blg_biomass_g)
+
+######################################################
+############## herbivory & insects ###################
+######################################################
+
+herbivory <- dat2 %>%
+  select(Date, Species, Temperature, Height_cm, Percent_leaf_damage, Visible_insects, Predators)
+
+herbivory2 <- herbivory %>%
+  filter(Date != "8-Jul")
+
+herbivory2[herbivory2 == " " | herbivory2 == "N/A" | herbivory2 == "DEAD" | herbivory2 == ""] <- NA
   
+herbivory3 <- herbivory2 %>%
+  drop_na(Percent_leaf_damage)
+
+herbivory3$Percent_leaf_damage <- as.numeric(herbivory3$Percent_leaf_damage)
   
 ```
 
@@ -346,6 +362,23 @@ g5 <- ggplot(data = barGraphStats(data = total, variable = "blg_biomass_g", byFa
 
 ##setting theme to remove background grid and add axis lines##    
 g5 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+```
+
+
+Herbivory
+Leaf damage graphs
+```{r}
+g6 <- ggplot(data = barGraphStats(data = herbivory3, variable = "Percent_leaf_damage", byFactorNames = c("Species", "Temperature")), aes(x=Species, y=mean, fill = Temperature)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Plant Species") + ylab("Percent Leaf Damage") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g6 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("Leafdamage_temperature_species.png")
 
 ```
 
