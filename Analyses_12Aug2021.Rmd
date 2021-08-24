@@ -51,6 +51,18 @@ dat2 <- dat %>%
   mutate(across(where(is.factor), str_remove_all, pattern = fixed (" ")))
 
 #####################################################
+################## soil moisture ####################
+#####################################################
+
+soil <- dat2 %>%
+  filter(Date != "8-Jul")
+
+soil2 <- soil %>%
+  filter(Date != "9-Aug")
+
+soil2$soil_moisture <- as.numeric(soil2$soil_moisture)
+
+#####################################################
 #################### height data ####################
 #####################################################
 
@@ -130,6 +142,79 @@ barGraphStats <- function(data, variable, byFactorNames) {
 }
 ```
 
+Temperature and Soil Moisture Graph(S)
+```{r}
+##Creating colourblind palette###
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+###############################################
+## Soil moisture by temperature and species ##
+##############################################
+
+##saved graph as variable to edit theme below##
+g10 <- ggplot(data = barGraphStats(data = soil2, variable = "soil_moisture", byFactorNames = c("Species", "Temperature")), aes(x=Temperature, y=mean, fill = Species)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Temperature") + ylab("Soil Moisture") +
+    scale_fill_manual(values = cbPalette) 
+
+###############################################
+####### soil moisture by temperature ##########
+##############################################
+
+##setting theme to remove background grid and add axis lines##    
+g10 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+           axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("soil_moisture_temperate_species.png")
+
+
+##saved graph as variable to edit theme below##
+g11 <- ggplot(data = barGraphStats(data = soil2, variable = "soil_moisture", byFactorNames = c("Temperature")), aes(x=Temperature, y=mean)) +
+    geom_bar(stat='identity', position=position_dodge()) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
+    xlab("Temperature") + ylab("Soil Moisture") +
+    scale_fill_manual(values = cbPalette) 
+
+##setting theme to remove background grid and add axis lines##    
+g11 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+           axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("soil_moisture_temperature.png")
+
+
+```
+Soil moisture temperature repeated measures ANOVA
+```{r}
+library(nlme)
+library(emmeans)
+library(performance)
+
+options(contrasts=c('contr.sum','contr.poly')) #run this first, important to make sure your sum of squares work right
+
+soil_mod <- gls(soil_moisture ~ Species*Temperature, correlation = corAR1(form = ~ Date | Plant_number), data = soil2, method = 'REML')
+
+
+#below is the model
+
+  
+soil_mod <- lme(soil_moisture ~ Temperature, 
+                               data=soil2, 
+                               random=~1|Plant_number,
+                               correlation=corAR1(form = ~Date | Plant_number), 
+                               control=lmeControl(returnObject=T))
+#this checks that the model ran ok (checks assumptions, might not work exactly right on this model though)
+check_model(soil_mod)
+
+#this gives you your p-values
+anova.lme(soil_mod, type='sequential') 
+
+#this gives you the mean and standard errors for each treatment
+emmeans(soil_mod, pairwise~as.factor(Temperature), adjust="tukey")
+```
+
+
+
 Plant Height Graphs and Analyses
 Plant height over all weeks
 ```{r}
@@ -203,6 +288,24 @@ anova(mod2)
 
 mod3 <- glm(delta ~ Temperature.x*Species.x, data = height7)
 anova.glm(mod3)
+
+
+
+######## repeated measures anova on plant height ###########
+
+soil_mod <- lme(soil_moisture ~ Temperature, 
+                               data=soil2, 
+                               random=~1|Plant_number,
+                               correlation=corAR1(form = ~Date | Plant_number), 
+                               control=lmeControl(returnObject=T))
+#this checks that the model ran ok (checks assumptions, might not work exactly right on this model though)
+check_model(soil_mod)
+
+#this gives you your p-values
+anova.lme(soil_mod, type='sequential') 
+
+#this gives you the mean and standard errors for each treatment
+emmeans(soil_mod, pairwise~as.factor(Temperature), adjust="tukey")
 
 ```
 
