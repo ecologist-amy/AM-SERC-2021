@@ -172,11 +172,7 @@ g10 <- ggplot(data = barGraphStats(data = soil2, variable = "soil_moisture", byF
     geom_bar(stat='identity', position=position_dodge()) +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
     xlab("Temperature") + ylab("Soil Moisture") +
-    scale_fill_manual(values = cbPalette) 
-
-###############################################
-####### soil moisture by temperature ##########
-##############################################
+    scale_fill_brewer(palette = "Accent") 
 
 ##setting theme to remove background grid and add axis lines##    
 g10 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
@@ -184,24 +180,30 @@ g10 + theme(panel.background = element_blank(), panel.grid.major = element_blank
 
 ggsave("soil_moisture_temperate_species.png")
 
+###############################################
+####### soil moisture by temperature ##########
+##############################################
 
 ##saved graph as variable to edit theme below##
 g11 <- ggplot(data = barGraphStats(data = soil2, variable = "soil_moisture", byFactorNames = c("Temperature")), aes(x=Temperature, y=mean)) +
-    geom_bar(stat='identity', position=position_dodge()) +
+    geom_bar(stat='identity', width = 0.6, position=position_dodge(width = 0.3), fill = "#56B4E9") +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
-    xlab("Temperature") + ylab("Soil Moisture") +
-    scale_fill_manual(values = cbPalette) 
-
+    xlab("Temperature") + ylab("Soil Moisture") 
+    
 ##setting theme to remove background grid and add axis lines##    
-g11 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-           axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+g11 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 
-ggsave("soil_moisture_temperature.png")
+ggsave("soil_moisture_temperature.png", dpi =700)
 
 
 ```
 Soil moisture temperature repeated measures ANOVA
 ```{r}
+
+res.aov <- anova_test(data = soil2, dv = soil_moisture, wid = Temperature, within = Date)
+get_anova_table(res.aov)
+
+
 library(nlme)
 library(emmeans)
 library(performance)
@@ -214,7 +216,7 @@ soil_mod <- gls(soil_moisture ~ Species*Temperature, correlation = corAR1(form =
 #below is the model
 
   
-soil_mod <- lme(soil_moisture ~ Temperature, 
+soil_mod <- lme(soil_moisture ~ Temperature*Species, 
                                data=soil2, 
                                random=~1|Plant_number,
                                correlation=corAR1(form = ~Date | Plant_number), 
@@ -242,13 +244,13 @@ g1 <- ggplot(data = barGraphStats(data = height2, variable = "Height_cm", byFact
     geom_bar(stat='identity', position=position_dodge()) +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
     xlab("Plant Species") + ylab("Plant Height (cm)") +
-    scale_fill_manual(values = cbPalette) 
+    scale_fill_brewer(palette = "Accent") 
 
 ##setting theme to remove background grid and add axis lines##    
 g1 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
            axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 
-ggsave("plant_height_allweeks.png")
+ggsave("plant_height_allweeks.png", dpi = 700)
 
 ```
 
@@ -260,12 +262,12 @@ g2 <- ggplot(data = barGraphStats(data = height3, variable = "Height_cm", byFact
     geom_bar(stat='identity', position=position_dodge()) +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
     xlab("Plant Species") + ylab("Plant Height (cm)") +
-    scale_fill_manual(values = cbPalette) 
+    scale_fill_brewer(palette = "Accent") 
 
 ##setting theme to remove background grid and add axis lines##    
 g2 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 
-ggsave("height_finalday.png")
+ggsave("height_finalday.png", dpi = 700)
 ```
 Delta height graph
 ```{r}
@@ -307,7 +309,40 @@ anova.glm(mod3)
 
 
 
-######## repeated measures anova on plant height ###########
+library(nlme)
+library(emmeans)
+library(performance)
+
+options(contrasts=c('contr.sum','contr.poly')) #run this first, important to make sure your sum of squares work right
+
+#below is the model
+summary(height <- lme(Height_cm~Species*Temperature, #typical model with percent herbivory as a dependent variable and species and warming as explanatory variables
+                               data=height2, #what is the dataframe
+                               random=~1|Plant_number, #random statement for which raised bed the plant came from
+                               correlation=corAR1(form=~Date|Plant_number), #autoregressive correlation structure (good for height, which can only increase through time), saying that plants are nested within beds, which were sampled multiple dates
+                               control=lmeControl(returnObject=T))) #I forget what this does, but I think it is important to keep
+
+#this checks that the model ran ok (checks assumptions, might not work exactly right on this model though)
+check_model(insectherbModel)
+
+#this gives you your p-values
+anova.lme(insectherbModel, type='sequential') 
+
+#this gives you the mean and standard errors for each treatment
+emmeans(insectherbModel, pairwise~as.factor(warming), adjust="tukey")
+
+
+
+
+#same model with a sqrt transformation to make the data normal
+summary(insectherbModel <- lme(sqrt(avg_perc_herbivory)~as.factor(species)*as.factor(warming), #note how avg_perc_herbivory is square root transformed in this one
+                               data=herbivoryData, 
+                               random=~1|bed, 
+                               correlation=corAR1(form=~date|bed/plant),
+                               control=lmeControl(returnObject=T)))
+check_model(insectherbModel)
+anova.lme(insectherbModel, type='sequential') 
+back.emmeans(emmeans(insectherbModel, pairwise~as.factor(warming), adjust="tukey"), transform='sqrt') #back.emmeans will backtransform the values for you ######## repeated measures anova on plant height ###########
 
 soil_mod <- lme(soil_moisture ~ Temperature, 
                                data=soil2, 
@@ -332,10 +367,12 @@ g3 <- ggplot(data = barGraphStats(data = total, variable = "total_biomass_g", by
     geom_bar(stat='identity', position=position_dodge()) +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
     xlab("Plant Species") + ylab("Total Biomass (g)") +
-    scale_fill_manual(values = cbPalette) 
+    scale_fill_brewer(palette = "Accent") 
 
 ##setting theme to remove background grid and add axis lines##    
 g3 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
+
+ggsave("TotalBiomass.png", dpi = 700)
 
 
 ```
@@ -373,12 +410,12 @@ g6 <- ggplot(data = barGraphStats(data = herbivory3, variable = "Percent_leaf_da
     geom_bar(stat='identity', position=position_dodge()) +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.2, position = position_dodge(0.9)) +
     xlab("Plant Species") + ylab("Percent Leaf Damage") +
-    scale_fill_manual(values = cbPalette) 
+    scale_fill_brewer(palette = "Accent") 
 
 ##setting theme to remove background grid and add axis lines##    
 g6 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 
-ggsave("Leafdamage_temperature_species.png")
+ggsave("Leafdamage_temperature_species.png", dpi = 700)
 
 ```
 
