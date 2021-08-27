@@ -200,9 +200,12 @@ ggsave("soil_moisture_temperature.png", dpi =700)
 Soil moisture temperature repeated measures ANOVA
 ```{r}
 
-res.aov <- anova_test(data = soil2, dv = soil_moisture, wid = Temperature, within = Date)
-get_anova_table(res.aov)
 
+library(rstatix)
+soil.anova <- anova_test(data = soil2, dv = log(soil_moisture), wid = Temperature, within = Date)
+get_anova_table(soil.anova)
+
+soil2$Plant_number <- as.numeric(soil2$Plant_number)
 
 library(nlme)
 library(emmeans)
@@ -229,6 +232,9 @@ anova.lme(soil_mod, type='sequential')
 
 #this gives you the mean and standard errors for each treatment
 emmeans(soil_mod, pairwise~as.factor(Temperature), adjust="tukey")
+
+
+
 ```
 
 
@@ -297,66 +303,30 @@ library(lme4)
 library(nlme)
 library(lattice)
 library(effects)
+library(emmeans)
+library(performance)
 
-mod1 <- lme(Height_cm ~ Temperature*Species, random = ~1|Date, data = height2)
+mod1 <- lme(log(Height_cm) ~ Temperature*Species, random = ~1|Date, data = height2)
 anova(mod1)
+
+back.emmeans(emmeans(mod1, list(pairwise~Temperature*Species), adjust="tukey"), transform='log') 
 
 mod2 <- glm(Height_cm ~ Temperature*Species, data = height3)
 anova(mod2)
 
-mod3 <- glm(delta ~ Temperature.x*Species.x, data = height7)
-anova.glm(mod3)
+#mod3 <- glm(delta ~ Temperature.x*Species.x, data = height7)
+#anova.glm(mod3)
 
 
+height.anova <- anova_test(data = height2, log(Height_cm) ~ Temperature*Species, dv = Height_cm, wid = Plant_number, within = Date)
 
-library(nlme)
-library(emmeans)
-library(performance)
+get_anova_table(height.anova)
 
-options(contrasts=c('contr.sum','contr.poly')) #run this first, important to make sure your sum of squares work right
-
-#below is the model
-summary(height <- lme(Height_cm~Species*Temperature, #typical model with percent herbivory as a dependent variable and species and warming as explanatory variables
-                               data=height2, #what is the dataframe
-                               random=~1|Plant_number, #random statement for which raised bed the plant came from
-                               correlation=corAR1(form=~Date|Plant_number), #autoregressive correlation structure (good for height, which can only increase through time), saying that plants are nested within beds, which were sampled multiple dates
-                               control=lmeControl(returnObject=T))) #I forget what this does, but I think it is important to keep
-
-#this checks that the model ran ok (checks assumptions, might not work exactly right on this model though)
-check_model(insectherbModel)
-
-#this gives you your p-values
-anova.lme(insectherbModel, type='sequential') 
-
-#this gives you the mean and standard errors for each treatment
-emmeans(insectherbModel, pairwise~as.factor(warming), adjust="tukey")
-
-
-
-
-#same model with a sqrt transformation to make the data normal
-summary(insectherbModel <- lme(sqrt(avg_perc_herbivory)~as.factor(species)*as.factor(warming), #note how avg_perc_herbivory is square root transformed in this one
-                               data=herbivoryData, 
-                               random=~1|bed, 
-                               correlation=corAR1(form=~date|bed/plant),
-                               control=lmeControl(returnObject=T)))
-check_model(insectherbModel)
-anova.lme(insectherbModel, type='sequential') 
-back.emmeans(emmeans(insectherbModel, pairwise~as.factor(warming), adjust="tukey"), transform='sqrt') #back.emmeans will backtransform the values for you ######## repeated measures anova on plant height ###########
-
-soil_mod <- lme(soil_moisture ~ Temperature, 
-                               data=soil2, 
-                               random=~1|Plant_number,
-                               correlation=corAR1(form = ~Date | Plant_number), 
-                               control=lmeControl(returnObject=T))
-#this checks that the model ran ok (checks assumptions, might not work exactly right on this model though)
-check_model(soil_mod)
-
-#this gives you your p-values
-anova.lme(soil_mod, type='sequential') 
-
-#this gives you the mean and standard errors for each treatment
-emmeans(soil_mod, pairwise~as.factor(Temperature), adjust="tukey")
+pwc <- height2 %>%
+  group_by(Species) %>%
+  pairwise_t_test(
+    Height_cm ~ Temperature, paired = F
+    )
 
 ```
 
@@ -416,6 +386,15 @@ g6 <- ggplot(data = barGraphStats(data = herbivory3, variable = "Percent_leaf_da
 g6 + theme(panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), text = element_text(size = 16),axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 
 ggsave("Leafdamage_temperature_species.png", dpi = 700)
+
+```
+
+Herbivory analysis
+```{r}
+
+ggqqplot(herbivory3$Percent_leaf_damage)
+
+herbivory <- glmer(Percent_leaf_damage ~ Temperature*Species + (1|Date), data = herbivory3, family = poisson)
 
 ```
 
